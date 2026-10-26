@@ -1,0 +1,20 @@
+{
+  "name": "inventory-order-management",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A course project for managing inventory and customer orders.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.6.2",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0"
+  }
+}

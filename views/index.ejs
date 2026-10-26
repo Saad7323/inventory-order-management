@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"><title>Inventory & Orders</title></head>
+<body><main><h1>Inventory &amp; Orders</h1><p>Create a confirmed order to update stock immediately.</p>
+<% if (error) { %><p class="error"><%= error %></p><% } %>
+<section><h2>Current inventory</h2><table><thead><tr><th>SKU</th><th>Product</th><th>Price</th><th>In stock</th><th>Status</th></tr></thead><tbody><% products.forEach(product => { %><tr><td><%= product.sku %></td><td><%= product.name %></td><td>$<%= product.unit_price.toFixed(2) %></td><td><%= product.stock_quantity %></td><td><%= product.stock_quantity <= product.reorder_level ? 'Low stock' : 'Available' %></td></tr><% }) %></tbody></table></section>
+<section><h2>Create order</h2><form method="post" action="/orders"><label>Customer name <input name="customerName" required></label><label>Product <select name="productId"><% products.forEach(product => { %><option value="<%= product.id %>"><%= product.name %> (<%= product.stock_quantity %> available)</option><% }) %></select></label><label>Quantity <input type="number" name="quantity" min="1" value="1" required></label><button>Confirm order</button></form></section>
+</main></body></html>
