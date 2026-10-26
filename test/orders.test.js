@@ -23,3 +23,13 @@ test('insufficient stock rejects the entire order without changing inventory', (
   assert.equal(db.prepare('SELECT stock_quantity FROM products WHERE id = 1').get().stock_quantity, 5);
   assert.equal(db.prepare('SELECT COUNT(*) AS count FROM orders').get().count, 0);
 });
+
+test('duplicate product lines are combined before stock validation', () => {
+  const db = freshDatabase();
+  assert.throws(() => confirmOrder(db, {
+    customerName: 'Asha',
+    items: [{ productId: 1, quantity: 3 }, { productId: 1, quantity: 3 }],
+  }), /Insufficient stock/);
+  assert.equal(db.prepare('SELECT stock_quantity FROM products WHERE id = 1').get().stock_quantity, 5);
+  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM order_items').get().count, 0);
+});

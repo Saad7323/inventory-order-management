@@ -4,16 +4,20 @@ function confirmOrder(db, { customerName, items }) {
   if (!Array.isArray(items) || items.length === 0) throw new Error('At least one product is required.');
 
   const placeOrder = db.transaction(() => {
-    const lines = items.map(({ productId, quantity }) => {
+    const requestedByProduct = new Map();
+    for (const { productId, quantity } of items) {
       const id = Number(productId);
       const requested = Number(quantity);
       if (!Number.isInteger(id) || !Number.isInteger(requested) || requested <= 0) {
         throw new Error('Each order quantity must be a positive whole number.');
       }
+      requestedByProduct.set(id, (requestedByProduct.get(id) || 0) + requested);
+    }
+    const lines = [...requestedByProduct].map(([id, quantity]) => {
       const product = db.prepare('SELECT * FROM products WHERE id = ? AND active = 1').get(id);
       if (!product) throw new Error('One of the selected products is unavailable.');
-      if (product.stock_quantity < requested) throw new Error(`Insufficient stock for ${product.name}.`);
-      return { product, quantity: requested };
+      if (product.stock_quantity < quantity) throw new Error(`Insufficient stock for ${product.name}.`);
+      return { product, quantity };
     });
     const total = lines.reduce((sum, line) => sum + line.product.unit_price * line.quantity, 0);
     const order = db.prepare('INSERT INTO orders (customer_name, total_amount) VALUES (?, ?)').run(cleanName, total);
