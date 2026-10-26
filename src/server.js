@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('node:path');
 const { createDatabase, seedProducts } = require('./database');
 const { confirmOrder } = require('./orders');
+const { addProduct, restockProduct } = require('./inventory');
 
 function createApp(db = createDatabase()) {
   seedProducts(db);
@@ -13,7 +14,8 @@ function createApp(db = createDatabase()) {
 
   app.get('/', (_req, res) => {
     const products = db.prepare('SELECT * FROM products WHERE active = 1 ORDER BY name').all();
-    res.render('index', { products, error: null });
+    const recentOrders = db.prepare('SELECT * FROM orders ORDER BY created_at DESC, id DESC LIMIT 5').all();
+    res.render('index', { products, recentOrders, error: null });
   });
   app.post('/orders', (req, res) => {
     const items = Array.isArray(req.body.productId) ? req.body.productId.map((productId, index) => ({ productId, quantity: req.body.quantity[index] })) : [{ productId: req.body.productId, quantity: req.body.quantity }];
@@ -22,8 +24,33 @@ function createApp(db = createDatabase()) {
       res.redirect(`/orders/${order.id}`);
     } catch (error) {
       const products = db.prepare('SELECT * FROM products WHERE active = 1 ORDER BY name').all();
-      res.status(400).render('index', { products, error: error.message });
+      const recentOrders = db.prepare('SELECT * FROM orders ORDER BY created_at DESC, id DESC LIMIT 5').all();
+      res.status(400).render('index', { products, recentOrders, error: error.message });
     }
+  });
+  app.post('/products', (req, res) => {
+    try {
+      addProduct(db, req.body);
+      res.redirect('/');
+    } catch (error) {
+      const products = db.prepare('SELECT * FROM products WHERE active = 1 ORDER BY name').all();
+      const recentOrders = db.prepare('SELECT * FROM orders ORDER BY created_at DESC, id DESC LIMIT 5').all();
+      res.status(400).render('index', { products, recentOrders, error: error.message });
+    }
+  });
+  app.post('/products/:id/restock', (req, res) => {
+    try {
+      restockProduct(db, { productId: req.params.id, quantity: req.body.quantity });
+      res.redirect('/');
+    } catch (error) {
+      const products = db.prepare('SELECT * FROM products WHERE active = 1 ORDER BY name').all();
+      const recentOrders = db.prepare('SELECT * FROM orders ORDER BY created_at DESC, id DESC LIMIT 5').all();
+      res.status(400).render('index', { products, recentOrders, error: error.message });
+    }
+  });
+  app.get('/orders', (_req, res) => {
+    const orders = db.prepare('SELECT * FROM orders ORDER BY created_at DESC, id DESC').all();
+    res.render('orders', { orders });
   });
   app.get('/orders/:id', (req, res) => {
     const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
