@@ -3,3 +3,5 @@ data/*.db
 data/*.db-*
 .env
 coverage/
+tmp/
+.DS_Store

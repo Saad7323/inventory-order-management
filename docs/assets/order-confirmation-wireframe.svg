@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
+  <style>text{font-family:Arial,sans-serif;fill:#172033}.title{font-size:30px;font-weight:bold}.heading{font-size:20px;font-weight:bold}.label{font-size:15px}.small{font-size:12px}.box{fill:#fff;stroke:#74829a;stroke-width:2}.shade{fill:#edf2f8;stroke:#74829a;stroke-width:1}.ok{fill:#e7f6ed;stroke:#2e7d4f;stroke-width:2}</style>
+  <rect width="1200" height="720" fill="#f6f8fb"/><rect x="130" y="45" width="940" height="610" rx="12" class="box"/>
+  <text x="180" y="110" class="label">Dashboard | All orders</text><rect x="180" y="145" width="840" height="75" rx="6" class="ok"/><text x="210" y="190" class="title">Order #104 confirmed</text>
+  <text x="180" y="265" class="label">Customer: Jordan Lee</text><text x="180" y="315" class="heading">Order items</text>
+  <rect x="180" y="335" width="840" height="42" class="shade"/><text x="205" y="362" class="label">Product</text><text x="630" y="362" class="label">Quantity</text><text x="770" y="362" class="label">Unit price</text>
+  <rect x="180" y="377" width="840" height="100" class="box"/><text x="205" y="415" class="label">Wireless Keyboard</text><text x="660" y="415" class="label">2</text><text x="810" y="415" class="label">$49.99</text><text x="205" y="457" class="label">Optical Mouse</text><text x="660" y="457" class="label">1</text><text x="810" y="457" class="label">$24.99</text>
+  <text x="760" y="535" class="heading">Total: $124.97</text><rect x="180" y="565" width="170" height="42" class="shade"/><text x="200" y="592" class="label">Return to inventory</text>
+  <text x="180" y="635" class="small">Wireframe: successful end-to-end order confirmation state (not a live screenshot).</text>
+</svg>
