@@ -29,4 +29,28 @@ function restockProduct(db, { productId, quantity }) {
   restock();
 }
 
-module.exports = { addProduct, restockProduct };
+function updateProduct(db, { productId, sku, name, unitPrice, reorderLevel }) {
+  const id = Number(productId);
+  const cleanSku = String(sku || '').trim().toUpperCase();
+  const cleanName = String(name || '').trim();
+  const price = Number(unitPrice);
+  const reorder = Number(reorderLevel);
+  if (!Number.isInteger(id) || !cleanSku || !cleanName) throw new Error('SKU and product name are required.');
+  if (!Number.isFinite(price) || price < 0 || !Number.isInteger(reorder) || reorder < 0) throw new Error('Use a valid price and whole-number reorder level.');
+  try {
+    const result = db.prepare('UPDATE products SET sku = ?, name = ?, unit_price = ?, reorder_level = ? WHERE id = ? AND active = 1').run(cleanSku, cleanName, price, reorder, id);
+    if (!result.changes) throw new Error('Product not found.');
+  } catch (error) {
+    if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') throw new Error('That SKU already exists.');
+    throw error;
+  }
+}
+
+function deactivateProduct(db, productId) {
+  const id = Number(productId);
+  if (!Number.isInteger(id)) throw new Error('Product not found.');
+  const result = db.prepare('UPDATE products SET active = 0 WHERE id = ? AND active = 1').run(id);
+  if (!result.changes) throw new Error('Product not found or already inactive.');
+}
+
+module.exports = { addProduct, restockProduct, updateProduct, deactivateProduct };
