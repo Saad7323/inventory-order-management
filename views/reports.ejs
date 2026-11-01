@@ -1,0 +1,95 @@
+<%- include('partials/start') %><section class="page-heading">
+  <div>
+    <div class="eyebrow">TURN ACTIVITY INTO UNDERSTANDING</div>
+    <h1>Reports<span class="title-dot">.</span></h1>
+    <p>A useful view of inventory and sales, for any period.</p>
+  </div>
+  <div class="heading-actions"><button class="button" type="button" data-print><%- icon('report') %>Print report</button></div>
+</section>
+<section class="card section-spacer">
+  <div class="card-body">
+    <form class="range-form" method="get"><label>Start date<input type="date" name="from" required value="<%= from %>"></label><label>End
+        date<input type="date" name="to" required value="<%= to %>"></label><button class="button primary">Generate report</button><span
+        class="form-hint" style="margin:0 0 7px 8px">Dates are inclusive · UTC</span></form>
+  </div>
+</section>
+<div class="stats-grid">
+  <article class="stat-card stat-blue">
+    <div class="stat-label">Net sales</div><strong class="stat-value"><%= money(report.stats.revenue) %></strong>
+    <div class="stat-foot">Confirmed orders in the selected period</div>
+  </article>
+  <article class="stat-card stat-green">
+    <div class="stat-label">Confirmed orders</div><strong class="stat-value"><%= report.stats.confirmed %></strong>
+    <div class="stat-foot">Of <%= report.stats.orders %> orders placed</div>
+  </article>
+  <article class="stat-card stat-amber">
+    <div class="stat-label">Average sale</div><strong class="stat-value"><%= money(report.stats.average) %></strong>
+    <div class="stat-foot">Per confirmed order</div>
+  </article>
+  <article class="stat-card stat-rose">
+    <div class="stat-label">Cancelled orders</div><strong class="stat-value"><%= report.stats.cancelled %></strong>
+    <div class="stat-foot">Excluded from sales totals</div>
+  </article>
+</div>
+<section class="card section-spacer">
+  <div class="table-section-header">
+    <div>
+      <h2 class="report-tabs-title"><%- icon('chart') %>Sales report</h2>
+      <p><%= from %> – <%= to %> · Confirmed sales grouped by order date</p>
+    </div><a class="button" href="/export/report?type=sales&from=<%= from %>&to=<%= to %>"><%- icon('down') %>Export CSV</a>
+  </div>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Date (UTC)</th>
+          <th class="numeric">Confirmed orders</th>
+          <th class="numeric">Revenue</th>
+        </tr>
+      </thead>
+      <tbody><% report.daily.forEach(d=>{ %><tr>
+          <td><%= datetime(d.day+'T00:00:00Z',true) %></td>
+          <td class="numeric"><%= d.orders %></td>
+          <td class="numeric value-cell"><%= money(d.revenue) %></td>
+        </tr><% }) %></tbody>
+    </table>
+  </div><% if(!report.daily.length){ %><div class="empty-state"><%- icon('chart') %><h3>No confirmed sales for this period</h3>
+    <p>Select another date range or create an order.</p>
+  </div><% } %>
+</section>
+<section class="card">
+  <div class="table-section-header">
+    <div>
+      <h2 class="report-tabs-title"><%- icon('box') %>Inventory report</h2>
+      <p><%= from %> – <%= to %> · All products, including discontinued · Values at current unit prices</p>
+    </div><a class="button" href="/export/report?type=inventory&from=<%= from %>&to=<%= to %>"><%- icon('down') %>Export CSV</a>
+  </div>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>SKU</th>
+          <th class="numeric">Opening qty</th>
+          <th class="numeric">Stock in</th>
+          <th class="numeric">Stock out</th>
+          <th class="numeric">Closing qty</th>
+          <th class="numeric">Closing value</th>
+        </tr>
+      </thead>
+      <tbody><% report.inventory.forEach(p=>{ %><tr>
+          <td><%= p.name %></td>
+          <td class="sku"><%= p.sku %></td>
+          <td class="numeric"><%= number(p.opening) %></td>
+          <td class="numeric green-text">+<%= number(p.increases) %></td>
+          <td class="numeric rose-text">−<%= number(p.decreases) %></td>
+          <td class="numeric"><%= number(p.closing) %></td>
+          <td class="numeric value-cell"><%= money(p.closing*p.unit_price) %></td>
+        </tr><% }) %></tbody>
+    </table>
+  </div>
+</section>
+<div class="callout"><%- icon('clock') %><p>Sales use each order’s original price and current status. Inventory opening and closing
+    quantities are reconstructed from stock movements. Valuation uses today’s catalogue prices, so price changes can affect historical value
+    estimates.</p>
+</div><%- include('partials/end') %>

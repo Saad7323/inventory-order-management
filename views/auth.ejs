@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title><%= setup?'Set up your workspace':'Welcome back' %> · StockPilot</title>
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+
+<body class="auth-body">
+  <div class="auth-story"><a class="brand" href="/"><span class="brand-mark"><%- icon('box') %></span><span>Stock<span
+          class="brand-light">Pilot</span></span></a>
+    <div class="auth-story-main"><span class="eyebrow light">A CLEARER VIEW OF YOUR BUSINESS</span>
+      <h1>Less guesswork.<br>More <span>in stock.</span></h1>
+      <p>A calmer way to manage inventory, keep orders moving, and see what's next.</p>
+      <div class="auth-illustration">
+        <div class="auth-mini-card"><span class="mini-box"><%- icon('box') %></span>
+          <div><small>Inventory at a glance</small><strong>Everything, accounted for.</strong></div><span
+            class="mini-check"><%- icon('check') %></span>
+        </div>
+        <div class="auth-mini-chart">
+          <div><span class="live-dot"></span> Ready for your next order</div><svg viewBox="0 0 360 90" aria-hidden="true">
+            <path d="M0 80 35 67 70 72 105 40 140 50 175 35 210 45 245 12 280 26 315 10 360 0" fill="none" stroke="#8fafff"
+              stroke-width="3" />
+          </svg>
+        </div>
+      </div>
+    </div>
+    <p class="auth-bottom">One workspace. A well-run business.</p>
+  </div>
+  <main class="auth-panel">
+    <div class="auth-form-wrap"><span class="eyebrow">WELCOME TO STOCKPILOT</span>
+      <h2><%= setup?'Make room for better inventory.':'Good to see you again.' %></h2>
+      <p class="muted">
+        <%= setup?'Create your manager account to get your workspace up and running.':'Sign in to see how your business is doing.' %></p>
+      <% if(error){ %><div class="error-message" role="alert"><%- icon('alert') %><%= error %></div><% } %><form method="post"
+        action="<%= setup?'/setup':'/login' %>" class="stack-form"><%- include('partials/csrf') %><% if(setup){ %><label>Your name<input
+            name="name" required maxlength="160" autocomplete="name" value="<%= values.name||'' %>"
+            placeholder="Alex Morgan"></label><% } %><label>Email address<input type="email" name="email" required maxlength="254"
+            autocomplete="username" value="<%= values.email||'' %>" placeholder="you@company.com"></label><label>Password<div
+            class="password-field"><input type="password" id="password" aria-label="Password" name="password" required
+              <%- setup?'minlength="10"':'' %> maxlength="128" autocomplete="<%= setup?'new-password':'current-password' %>"
+              placeholder="<%= setup?'At least 10 characters':'Enter your password' %>"><button class="password-toggle" type="button"
+              data-password-toggle="password" aria-label="Show password">Show</button></div></label><% if(setup){ %><p class="form-hint">
+          You’ll be the workspace manager. Add staff accounts later in Settings.</p><% } %><button
+          class="button primary auth-submit"><%= setup?'Create workspace':'Sign in to workspace' %><%- icon('arrow') %></button></form>
+      <div class="auth-secure"><%- icon('shield') %><span>Your workspace. Secure by design.</span></div>
+    </div>
+    <p class="auth-panel-footer">Inventory & Order Management System</p>
+  </main>
+</body>
+
+</html>

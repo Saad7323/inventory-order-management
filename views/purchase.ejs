@@ -1,0 +1,74 @@
+<%- include('partials/start') %><a class="back-link" href="/purchases"><%- icon('arrow') %>Back to purchase orders</a>
+<section class="page-heading">
+  <div>
+    <div class="eyebrow">PURCHASE ORDER</div>
+    <h1>#PO-<%= String(purchase.id).padStart(4,'0') %><span class="title-dot">.</span></h1>
+    <p>Created <%= datetime(purchase.created_at) %></p>
+  </div>
+  <div class="heading-actions"><span class="badge <%= purchase.status %>"><i></i><%= statusLabel(purchase.status) %></span><button
+      class="button" type="button" data-print><%- icon('report') %>Print order</button></div>
+</section>
+<div class="detail-layout">
+  <section class="card">
+    <div class="table-section-header">
+      <h2>Items to receive</h2><span class="muted"><%= items.length %> product lines</span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>SKU</th>
+            <th class="numeric">Quantity</th>
+            <th class="numeric">Unit cost</th>
+            <th class="numeric">Total</th>
+          </tr>
+        </thead>
+        <tbody><% items.forEach(item=>{ %><tr>
+            <td>
+              <div class="product-cell"><span class="product-image"><%- icon(productIcon(item)) %></span><strong><%= item.name %></strong>
+              </div>
+            </td>
+            <td class="sku"><%= item.sku %></td>
+            <td class="numeric"><%= item.quantity %></td>
+            <td class="numeric"><%= money(item.unit_cost) %></td>
+            <td class="numeric"><%= money(item.unit_cost*item.quantity) %></td>
+          </tr><% }) %></tbody>
+      </table>
+    </div>
+    <div class="card-body">
+      <div class="summary-row total"><span>Purchase total</span><strong><%= money(purchase.total_amount) %></strong></div>
+      <% if(purchase.notes){ %><div class="form-section">
+        <h2>Notes</h2>
+        <p class="backup-description"><%= purchase.notes %></p>
+      </div><% } %>
+    </div>
+  </section>
+  <aside class="detail-aside">
+    <section class="card info-card">
+      <h2>Supplier & delivery</h2>
+      <dl>
+        <dt>Supplier</dt>
+        <dd><a class="text-link" href="/suppliers/<%= purchase.supplier_id %>"><%= purchase.supplier_name %></a></dd>
+        <dt>Contact</dt>
+        <dd><%= purchase.contact_name||'Not provided' %><br><%= purchase.email %></dd>
+        <dt>Expected delivery</dt>
+        <dd><%= purchase.expected_at?datetime(purchase.expected_at+'T00:00:00Z',true):'Not specified' %></dd><% if(purchase.received_at){ %>
+        <dt>Received</dt>
+        <dd><%= datetime(purchase.received_at) %></dd><% } %>
+      </dl>
+    </section>
+    <section class="card info-card">
+      <h2><%= purchase.status==='pending'?'Ready when your delivery is.':'Purchase completed' %></h2><% if(purchase.status==='pending'){ %>
+      <p>Receive all goods to add the ordered quantities to stock. Receiving is final and can only happen once.</p>
+      <form method="post" action="/purchases/<%= purchase.id %>/receive"
+        data-confirm="Confirm that all ordered goods have arrived? All quantities will be added to inventory.">
+        <%- include('partials/csrf') %><button class="button primary full"><%- icon('check') %>Receive goods</button></form>
+      <form method="post" action="/purchases/<%= purchase.id %>/cancel"
+        data-confirm="Cancel this pending purchase order? Inventory will remain unchanged."><%- include('partials/csrf') %><button
+          class="button danger full">Cancel purchase order</button></form><% } else { %><p>
+        <%= purchase.status==='received'?'Goods have been received and stock movements recorded.':'This purchase was cancelled before receiving. Stock was not changed.' %>
+      </p><a class="button full" href="/movements">View stock movements</a><% } %>
+    </section>
+  </aside>
+</div><%- include('partials/end') %>

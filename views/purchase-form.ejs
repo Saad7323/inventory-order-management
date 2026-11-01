@@ -1,0 +1,51 @@
+<%- include('partials/start') %><a class="back-link" href="/purchases"><%- icon('arrow') %>Back to purchase orders</a>
+<section class="page-heading">
+  <div>
+    <div class="eyebrow">MAKE ROOM FOR WHAT'S NEXT</div>
+    <h1>Create purchase order<span class="title-dot">.</span></h1>
+    <p>A clear plan for your next delivery.</p>
+  </div>
+</section>
+<form method="post" action="/purchases" data-line-form><%- include('partials/csrf') %><div class="detail-layout">
+    <div class="card form-card stack-form">
+      <div>
+        <h2>Supplier & delivery</h2>
+        <p class="section-subtitle">Select a supplier to see its associated products.</p>
+        <div class="form-grid"><label>Supplier<select name="supplierId" required>
+              <option value="">Choose a supplier</option><% suppliers.forEach(s=>{ %><option value="<%= s.id %>"><%= s.name %></option>
+              <% }) %>
+            </select></label><label>Expected delivery<input type="date" name="expectedAt"></label></div>
+        <p class="form-hint" style="margin-top:12px">Missing a supplier or product? <a class="text-link" href="/suppliers">Manage supplier
+            associations</a>.</p>
+      </div>
+      <div class="form-section">
+        <h2>Purchase items</h2>
+        <p class="section-subtitle">Enter the quantities and the agreed supplier cost.</p>
+        <div class="order-lines">
+          <div class="order-line"><label>Product<select name="productId" required>
+                <option value="">Select a product</option><% products.forEach(p=>{ %><option value="<%= p.id %>"
+                  data-suppliers="<%= associations.filter(a=>a.product_id===p.id).map(a=>a.supplier_id).join(',') %>"><%= p.name %> ·
+                  <%= p.sku %></option><% }) %>
+              </select></label><label>Quantity<input type="number" name="quantity" min="1" max="100000000" value="1"
+                required></label><label>Unit cost ($)<input type="number" name="unitCost" min="0" max="10000000" step=".01" value="0"
+                required></label><button class="icon-button" type="button" data-remove-line
+              aria-label="Remove purchase line"><%- icon('close') %></button></div>
+        </div>
+      </div><button class="button add-line" type="button" data-add-line><%- icon('plus') %>Add another item</button><label>Notes<textarea
+          name="notes" maxlength="2000" placeholder="Delivery instructions or supplier reference..."></textarea></label>
+      <div class="form-actions"><a class="button" href="/purchases">Cancel</a><button class="button primary">Create purchase order</button>
+      </div>
+    </div>
+    <aside class="detail-aside">
+      <div class="card info-card">
+        <h2>Purchase summary</h2>
+        <div class="summary-row"><span>Product lines</span><strong data-order-lines>1</strong></div>
+        <div class="summary-row"><span>Total units</span><strong data-order-units>1</strong></div>
+        <div class="summary-row total"><span>Purchase total</span><strong data-order-total>$0.00</strong></div>
+      </div>
+      <div class="callout"><%- icon('truck') %><p>Creating a purchase order does not change inventory. Use “Receive goods” when the delivery
+          arrives to add all ordered quantities exactly once.</p>
+      </div>
+    </aside>
+  </div>
+</form><%- include('partials/end') %>

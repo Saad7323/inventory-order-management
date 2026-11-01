@@ -1,0 +1,82 @@
+<%- include('partials/start') %><section class="page-heading">
+  <div>
+    <div class="eyebrow">MAKE THIS SPACE YOURS</div>
+    <h1>Settings<span class="title-dot">.</span></h1>
+    <p>Your account, your team, and the details that keep things running.</p>
+  </div>
+</section>
+<div class="account-layout">
+  <section class="card info-card">
+    <h2>Your account</h2>
+    <dl>
+      <dt>Name</dt>
+      <dd><%= user.name %></dd>
+      <dt>Email address</dt>
+      <dd><%= user.email %></dd>
+      <dt>Permission level</dt>
+      <dd><span
+          class="badge <%= user.role==='manager'?'confirmed':'pending' %>"><%- icon('shield') %><%= user.role==='manager'?'Manager':'Staff' %></span>
+      </dd>
+    </dl>
+    <div class="callout"><%- icon('box') %><p><strong><%= counts.products %></strong> products · <strong><%= counts.orders %></strong> sales
+        orders in this workspace.</p>
+    </div>
+  </section>
+  <section class="card form-card">
+    <h2>Change your password</h2>
+    <p class="section-subtitle">Changing your password signs out all your sessions.</p>
+    <form class="stack-form" method="post" action="/account/password"><%- include('partials/csrf') %><label>Current password<input
+          type="password" name="currentPassword" required autocomplete="current-password" maxlength="128"></label><label>New password<input
+          type="password" name="password" required minlength="10" maxlength="128" autocomplete="new-password"
+          placeholder="At least 10 characters"></label><button class="button primary">Update password</button></form>
+  </section>
+</div>
+<% if(user.role==='manager'){ %><section class="card section-spacer">
+  <div class="table-section-header">
+    <div>
+      <h2>Workspace team</h2>
+      <p>Managers have full access. Staff can view inventory and movements, export inventory and orders, manage customers, and create sales
+        orders.</p>
+    </div>
+  </div>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Team member</th>
+          <th>Email</th>
+          <th>Joined</th>
+          <th>Access</th>
+        </tr>
+      </thead>
+      <tbody><% users.forEach(member=>{ %><tr>
+          <td><%= member.name %><%= member.id===user.id?' (you)':'' %></td>
+          <td><%= member.email %></td>
+          <td class="date-cell"><%= datetime(member.created_at,true) %></td>
+          <td>
+            <form class="access-form" method="post" action="/settings/users/<%= member.id %>"><%- include('partials/csrf') %><select
+                name="role" aria-label="Role for <%= member.name %>">
+                <option value="staff" <%= member.role==='staff'?'selected':'' %>>Staff</option>
+                <option value="manager" <%= member.role==='manager'?'selected':'' %>>Manager</option>
+              </select><select name="active" aria-label="Account status for <%= member.name %>">
+                <option value="1" <%= member.active?'selected':'' %>>Active</option>
+                <option value="0" <%= !member.active?'selected':'' %>>Disabled</option>
+              </select><button class="button">Save access</button></form>
+          </td>
+        </tr><% }) %></tbody>
+    </table>
+  </div>
+</section>
+<section class="card form-card">
+  <h2>Add a team member</h2>
+  <p class="section-subtitle">Create an individual account and share its initial password securely.</p>
+  <form class="team-form" method="post" action="/settings/users"><%- include('partials/csrf') %><label>Full name<input name="name" required
+        maxlength="160" autocomplete="off"></label><label>Email address<input name="email" type="email" required maxlength="254"
+        autocomplete="off"></label><label>Initial password<input name="password" type="password" required minlength="10" maxlength="128"
+        autocomplete="new-password"></label><label>Role<select name="role">
+        <option value="staff">Staff</option>
+        <option value="manager">Manager</option>
+      </select></label>
+    <div class="span-2 form-actions"><button class="button primary"><%- icon('plus') %>Add team member</button></div>
+  </form>
+</section><% } %><%- include('partials/end') %>

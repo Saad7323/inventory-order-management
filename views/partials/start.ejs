@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101b31">
+  <title><%= title %> · StockPilot</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+
+<body><a class="skip-link" href="#main">Skip to content</a>
+  <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+    <a class="brand" href="/"><span class="brand-mark"><%- icon('box') %></span><span>Stock<span
+          class="brand-light">Pilot</span><small>INVENTORY MANAGEMENT</small></span></a>
+    <div class="workspace-switch"><span class="workspace-avatar">S</span><span>Main workspace<small>Local inventory</small></span><span
+        class="workspace-dot"></span></div>
+    <div class="nav-label">WORKSPACE</div>
+    <nav class="nav-list">
+      <% const links = [{id:'dashboard',path:'/dashboard',icon:'grid',name:'Overview',manager:true},{id:'inventory',path:'/',icon:'box',name:'Inventory'},{id:'orders',path:'/orders',icon:'orders',name:'Sales orders'},{id:'movements',path:'/movements',icon:'arrows',name:'Stock movements'},{id:'customers',path:'/customers',icon:'users',name:'Customers'},{id:'suppliers',path:'/suppliers',icon:'truck',name:'Suppliers',manager:true},{id:'purchases',path:'/purchases',icon:'report',name:'Purchase orders',manager:true},{id:'reports',path:'/reports',icon:'chart',name:'Reports & analytics',manager:true}]; %>
+      <% links.filter(link=>!link.manager || user.role==='manager').forEach(link=>{ %><a href="<%= link.path %>"
+        class="nav-link <%= active===link.id?'active':'' %>"
+        <%- active===link.id?'aria-current="page"':'' %>><%- icon(link.icon) %><span><%= link.name %></span><% if(link.id==='inventory' && lowCount){ %><span
+          class="nav-count"><%= lowCount %></span><% } %></a><% }) %>
+    </nav>
+    <div class="nav-label second-label">MANAGEMENT</div>
+    <nav class="nav-list">
+      <% if(user.role==='manager'){ %><a href="/audit" class="nav-link <%= active==='audit'?'active':'' %>"><%- icon('shield') %>Audit
+        log</a><a href="/backup" class="nav-link <%= active==='backup'?'active':'' %>"><%- icon('down') %>Backup & restore</a><% } %>
+      <a href="/settings" class="nav-link <%= active==='settings'?'active':'' %>"><%- icon('settings') %>Settings</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-tip"><span class="tip-icon"><%- icon('chart') %></span><strong>A little clarity. A lot of control.</strong>
+        <p>Your stock, orders, and business.<br>All in one place.</p><a href="/?status=needs-restock">Check stock levels
+          <%- icon('arrow') %></a>
+      </div>
+      <div class="sidebar-profile"><span class="avatar"><%= user.name.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase() %></span>
+        <div><strong><%= user.name %></strong><small><%= user.role==='manager'?'Workspace manager':'Team member' %></small></div>
+        <form method="post" action="/logout"><%- include('csrf') %><button class="icon-button" title="Sign out"
+            aria-label="Sign out"><%- icon('logout') %></button></form>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" data-toggle-menu></div>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-left"><button type="button" class="icon-button mobile-menu" aria-label="Toggle navigation" aria-controls="sidebar"
+          aria-expanded="false" data-toggle-menu><%- icon('menu') %></button>
+        <div class="breadcrumbs">Workspace <span>/</span><strong><%= title %></strong></div>
+      </div>
+      <div class="topbar-right">
+        <form action="/search" method="get" class="global-search"><%- icon('search') %><input id="global-search" name="q"
+            aria-label="Search products, orders, customers and suppliers" placeholder="Search anything..."
+            value="<%= active===''?query.q||'':'' %>"><kbd>⌘ K</kbd></form><a class="notification-button icon-button"
+          href="/?status=needs-restock" aria-label="<%= lowCount %> products need restocking"><%- icon('bell') %><% if(lowCount){ %><span
+            class="notification-dot"></span><% } %></a><span class="topbar-divider"></span><a class="avatar top-avatar" href="/settings"
+          aria-label="Account settings"><%= user.name.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase() %></a>
+      </div>
+    </header>
+    <main id="main" class="content"><% if(notice){ %><div class="notice" role="status"><%- icon('check') %><%= notice %><button
+          class="icon-button" data-dismiss aria-label="Dismiss message"><%- icon('close') %></button></div><% } %>

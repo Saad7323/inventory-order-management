@@ -1,0 +1,91 @@
+<%- include('partials/start') %><% const supplier=type==='suppliers'; %><a class="back-link" href="/<%= type %>"><%- icon('arrow') %>Back to
+  <%= type %></a>
+<section class="page-heading">
+  <div class="contact-title"><span class="avatar"><%= contact.name.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase() %></span>
+    <div>
+      <div class="eyebrow"><%= supplier?'SUPPLIER PROFILE':'CUSTOMER PROFILE' %></div>
+      <h1><%= contact.name %><span class="title-dot">.</span></h1>
+      <p>Added <%= datetime(contact.created_at,true) %></p>
+    </div>
+  </div><a class="button" href="/<%= type %>/<%= contact.id %>/edit"><%- icon('settings') %>Edit details</a>
+</section>
+<div class="detail-layout">
+  <div><% if(!supplier){ %><div class="stats-grid" style="grid-template-columns:1fr 1fr">
+      <article class="stat-card stat-blue">
+        <div class="stat-label">Total orders</div><strong class="stat-value"><%= summary.orders %></strong>
+        <div class="stat-foot">Includes confirmed and cancelled orders</div>
+      </article>
+      <article class="stat-card stat-green">
+        <div class="stat-label">Lifetime sales</div><strong class="stat-value"><%= money(summary.total) %></strong>
+        <div class="stat-foot">Confirmed orders only</div>
+      </article>
+    </div><% } %><section class="card section-spacer">
+      <div class="table-section-header">
+        <div>
+          <h2><%= supplier?'Purchase order history':'Order history' %></h2>
+          <p>Every order linked to this contact</p>
+        </div><a class="text-link" href="/<%= supplier?'purchases':'orders' %>/new">Create order <%- icon('plus') %></a>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Created</th>
+              <th>Status</th>
+              <th class="numeric">Total</th>
+            </tr>
+          </thead>
+          <tbody><% history.rows.forEach(o=>{ %><tr>
+              <td><a class="text-link"
+                  href="/<%= supplier?'purchases':'orders' %>/<%= o.id %>">#<%= supplier?'PO':'SO' %>-<%= String(o.id).padStart(4,'0') %></a>
+              </td>
+              <td class="date-cell"><%= datetime(o.created_at) %></td>
+              <td><span class="badge <%= o.status %>"><i></i><%= statusLabel(o.status) %></span></td>
+              <td class="numeric"><%= money(o.total_amount) %></td>
+            </tr><% }) %></tbody>
+        </table>
+      </div><% if(!history.rows.length){ %><div class="empty-state"><%- icon('orders') %><h3>No orders yet</h3>
+        <p>Orders for this contact will appear here.</p>
+      </div><% } %><%- include('partials/pagination',{result:history,noun:'orders'}) %>
+    </section><% if(supplier){ %><section class="card">
+      <div class="table-section-header">
+        <div>
+          <h2>Associated products</h2>
+          <p><%= associated.length %> products available from this supplier</p>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>SKU</th>
+              <th>Status</th>
+              <th class="numeric">In stock</th>
+            </tr>
+          </thead>
+          <tbody><% associated.forEach(p=>{ %><tr>
+              <td><a class="text-link" href="/products/<%= p.id %>/edit"><%= p.name %></a></td>
+              <td class="sku"><%= p.sku %></td>
+              <td><span class="badge <%= status(p) %>"><i></i><%= statusLabel(status(p)) %></span></td>
+              <td class="numeric"><%= p.stock_quantity %></td>
+            </tr><% }) %></tbody>
+        </table>
+      </div><% if(!associated.length){ %><div class="empty-state">
+        <h3>No products associated</h3>
+        <p>Edit this supplier to connect products.</p>
+      </div><% } %>
+    </section><% } %></div>
+  <aside class="card info-card">
+    <h2>Contact information</h2>
+    <dl><% if(supplier){ %><dt>Contact person</dt>
+      <dd><%= contact.contact_name||'Not provided' %></dd><% } %><dt>Email</dt>
+      <dd><%= contact.email||'Not provided' %></dd>
+      <dt>Phone</dt>
+      <dd><%= contact.phone||'Not provided' %></dd>
+      <dt>Address</dt>
+      <dd><%= contact.address||'Not provided' %></dd>
+    </dl>
+  </aside>
+</div><%- include('partials/end') %>

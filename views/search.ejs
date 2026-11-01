@@ -1,0 +1,45 @@
+<%- include('partials/start') %><section class="page-heading">
+  <div>
+    <div class="eyebrow">FIND WHAT KEEPS THINGS MOVING</div>
+    <h1>Search<span class="title-dot">.</span></h1>
+    <p>
+      <%= term?'Results for “'+term+'” · Up to 10 matches in each category':'Search products, orders, customers, and suppliers from the header.' %>
+    </p>
+  </div>
+</section>
+<div class="search-results">
+  <section class="card">
+    <div class="table-section-header">
+      <h2>Products</h2><a href="/?q=<%= encodeURIComponent(term) %>" class="text-link">View all <%- icon('arrow') %></a>
+    </div>
+    <div class="card-body"><% products.forEach(p=>{ %><a class="search-item"
+        href="<%= user.role==='manager'?'/products/'+p.id+'/edit':'/?q='+encodeURIComponent(p.sku) %>">
+        <div><strong><%= p.name %></strong><small><%= p.sku %> · <%= p.stock_quantity %> in stock</small></div><span
+          class="badge <%= status(p) %>"><i></i><%= statusLabel(status(p)) %></span>
+      </a><% }) %><% if(!products.length){ %><p class="muted">No matching products.</p><% } %></div>
+  </section>
+  <section class="card">
+    <div class="table-section-header">
+      <h2>Sales orders</h2><a href="/orders?q=<%= encodeURIComponent(term) %>" class="text-link">View all <%- icon('arrow') %></a>
+    </div>
+    <div class="card-body"><% orders.forEach(o=>{ %><a class="search-item" href="/orders/<%= o.id %>">
+        <div><strong>#SO-<%= String(o.id).padStart(4,'0') %> · <%= o.customer_name %></strong><small><%= money(o.total_amount) %> ·
+            <%= statusLabel(o.status) %></small></div><%- icon('chevron') %>
+      </a><% }) %><% if(!orders.length){ %><p class="muted">No matching orders.</p><% } %></div>
+  </section>
+  <section class="card">
+    <div class="table-section-header">
+      <h2>Customers</h2><a href="/customers?q=<%= encodeURIComponent(term) %>" class="text-link">View all <%- icon('arrow') %></a>
+    </div>
+    <div class="card-body"><% customers.forEach(c=>{ %><a class="search-item" href="/customers/<%= c.id %>">
+        <div><strong><%= c.name %></strong><small><%= c.email||'No email provided' %></small></div><%- icon('chevron') %>
+      </a><% }) %><% if(!customers.length){ %><p class="muted">No matching customers.</p><% } %></div>
+  </section><% if(user.role==='manager'){ %><section class="card">
+    <div class="table-section-header">
+      <h2>Suppliers</h2><a href="/suppliers?q=<%= encodeURIComponent(term) %>" class="text-link">View all <%- icon('arrow') %></a>
+    </div>
+    <div class="card-body"><% suppliers.forEach(s=>{ %><a class="search-item" href="/suppliers/<%= s.id %>">
+        <div><strong><%= s.name %></strong><small><%= s.email||'No email provided' %></small></div><%- icon('chevron') %>
+      </a><% }) %><% if(!suppliers.length){ %><p class="muted">No matching suppliers.</p><% } %></div>
+  </section><% } %>
+</div><%- include('partials/end') %>

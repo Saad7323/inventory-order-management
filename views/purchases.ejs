@@ -1,0 +1,50 @@
+<%- include('partials/start') %><section class="page-heading">
+  <div>
+    <div class="eyebrow">STOCK UP WITH CONFIDENCE</div>
+    <h1>Purchase orders<span class="title-dot">.</span></h1>
+    <p>From supplier to shelf. Keep every restock on track.</p>
+  </div><a class="button primary" href="/purchases/new"><%- icon('plus') %>Create purchase order</a>
+</section>
+<section class="card">
+  <div class="table-toolbar">
+    <nav class="tabs">
+      <% [['','All orders'],['pending','Pending'],['received','Received'],['cancelled','Cancelled']].forEach(([key,label])=>{ %><a
+        class="tab <%= (query.status||'')===key?'selected':'' %>" href="<%= url({status:key,page:1}) %>"><%= label %></a><% }) %></nav>
+    <form class="table-search" method="get"><%- icon('search') %><input name="q" value="<%= query.q||'' %>"
+        placeholder="Supplier or order number..."
+        aria-label="Search purchase orders"><% Object.entries(query).filter(([key])=>!['q','page','notice'].includes(key)).forEach(([key,value])=>{ %><input
+        type="hidden" name="<%= key %>" value="<%= value %>"><% }) %></form>
+  </div>
+  <form class="filter-panel" method="get"><input type="hidden" name="q" value="<%= query.q||'' %>"><input type="hidden" name="status"
+      value="<%= query.status||'' %>"><label>From<input type="date" name="from" value="<%= query.from||'' %>"></label><label>To<input
+        type="date" name="to" value="<%= query.to||'' %>"></label><button class="button primary">Apply filters</button><a href="/purchases"
+      class="text-link">Reset</a></form>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Purchase order</th>
+          <th>Supplier</th>
+          <th>Placed</th>
+          <th>Expected</th>
+          <th>Status</th>
+          <th class="numeric">Total</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody><% result.rows.forEach(p=>{ %><tr>
+          <td><a class="text-link" href="/purchases/<%= p.id %>">#PO-<%= String(p.id).padStart(4,'0') %></a></td>
+          <td><a href="/suppliers/<%= p.supplier_id %>"><%= p.supplier_name %></a></td>
+          <td class="date-cell"><%= datetime(p.created_at,true) %></td>
+          <td class="date-cell"><%= p.expected_at?datetime(p.expected_at+'T00:00:00Z',true):'—' %></td>
+          <td><span class="badge <%= p.status %>"><i></i><%= statusLabel(p.status) %></span></td>
+          <td class="numeric value-cell"><%= money(p.total_amount) %></td>
+          <td><a href="/purchases/<%= p.id %>" class="icon-button" aria-label="View purchase order <%= p.id %>"><%- icon('chevron') %></a>
+          </td>
+        </tr><% }) %></tbody>
+    </table>
+  </div><% if(!result.rows.length){ %><div class="empty-state"><%- icon('truck') %><h3>Keep your next restock on the radar</h3>
+    <p>Create a purchase order to start tracking supplier deliveries.</p><a class="button primary" href="/purchases/new">Create purchase
+      order</a>
+  </div><% } %><%- include('partials/pagination',{result,noun:'purchase orders'}) %>
+</section><%- include('partials/end') %>

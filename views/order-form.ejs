@@ -1,0 +1,50 @@
+<%- include('partials/start') %><a class="back-link" href="/orders"><%- icon('arrow') %>Back to sales orders</a>
+<section class="page-heading">
+  <div>
+    <div class="eyebrow">GOOD BUSINESS STARTS HERE</div>
+    <h1>Create order<span class="title-dot">.</span></h1>
+    <p>Choose your customer and products. We'll take care of the stock.</p>
+  </div>
+</section>
+<form method="post" action="/orders" data-line-form><%- include('partials/csrf') %><div class="detail-layout">
+    <div class="card form-card stack-form">
+      <div>
+        <h2>Customer details</h2>
+        <p class="section-subtitle">Choose a contact or enter a new customer’s name.</p>
+        <div class="form-grid"><label>Customer<select id="customer-select" name="customerId">
+              <option value="">New customer</option><% customers.forEach(c=>{ %><option value="<%= c.id %>">
+                <%= c.name %><%= c.email?' · '+c.email:'' %></option><% }) %>
+            </select></label><label>Customer name<input name="customerName" id="customer-name" required maxlength="160"
+              placeholder="e.g. Jordan Lee"></label></div>
+      </div>
+      <div class="form-section">
+        <h2>Order items</h2>
+        <p class="section-subtitle">Prices are captured when the order is confirmed.</p>
+        <div class="order-lines">
+          <div class="order-line sales-line"><label>Product<select name="productId" required>
+                <option value="">Select a product</option><% products.forEach(p=>{ %><option value="<%= p.id %>"
+                  data-price="<%= p.unit_price %>" <%= p.stock_quantity?'':'disabled' %>><%= p.name %> · <%= p.stock_quantity %> in stock ·
+                  <%= money(p.unit_price) %></option><% }) %>
+              </select></label><label>Quantity<input type="number" name="quantity" value="1" required min="1" max="100000000"></label>
+            <div class="line-total" data-line-total>$0.00</div><button type="button" class="icon-button" aria-label="Remove order line"
+              data-remove-line><%- icon('close') %></button>
+          </div>
+        </div>
+      </div><button class="button add-line" type="button" data-add-line><%- icon('plus') %>Add another item</button>
+      <div class="form-actions"><a class="button" href="/orders">Cancel</a><button class="button primary"><%- icon('check') %>Confirm
+          order</button></div>
+    </div>
+    <aside class="detail-aside">
+      <div class="card info-card">
+        <h2>Order summary</h2>
+        <div class="summary-row"><span>Product lines</span><strong data-order-lines>1</strong></div>
+        <div class="summary-row"><span>Total units</span><strong data-order-units>1</strong></div>
+        <div class="summary-row total"><span>Order total</span><strong data-order-total>$0.00</strong></div>
+        <p class="form-hint">No taxes or shipping fees are added.</p>
+      </div>
+      <div class="callout"><%- icon('shield') %><p>Stock is checked again at confirmation. If any item is unavailable, the entire order is
+          rejected and stock stays unchanged.</p>
+      </div>
+    </aside>
+  </div>
+</form><%- include('partials/end') %>

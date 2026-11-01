@@ -1,0 +1,38 @@
+<%- include('partials/start') %><% const supplier=type==='suppliers'; %><section class="page-heading">
+  <div>
+    <div class="eyebrow"><%= supplier?'GOOD PARTNERS. BETTER BUSINESS.':'THE PEOPLE BEHIND YOUR ORDERS' %></div>
+    <h1><%= title %><span class="title-dot">.</span></h1>
+    <p><%= supplier?'Keep your supply chain close and your shelves stocked.':'Contact details and order history, together at last.' %></p>
+  </div><a class="button primary" href="/<%= type %>/new"><%- icon('plus') %>Add <%= type.slice(0,-1) %></a>
+</section>
+<section class="card">
+  <div class="table-toolbar">
+    <div class="tabs"><span class="tab selected">All <%= type %><span class="tab-count"><%= result.total %></span></span></div>
+    <form method="get" class="table-search"><%- icon('search') %><input name="q" value="<%= query.q||'' %>"
+        placeholder="Search name, email, or phone..." aria-label="Search <%= type %>"></form>
+  </div>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th><%= supplier?'Supplier':'Customer' %></th><% if(supplier){ %><th>Contact person</th><% } %><th>Email</th>
+          <th>Phone</th>
+          <th class="numeric"><%= supplier?'Associated products':'Orders' %></th><% if(!supplier){ %><th class="numeric">Total spent</th>
+          <% } %><th></th>
+        </tr>
+      </thead>
+      <tbody><% result.rows.forEach(c=>{ %><tr>
+          <td><a class="product-cell" href="/<%= type %>/<%= c.id %>"><span
+                class="product-image"><%- icon(supplier?'truck':'users') %></span><strong><%= c.name %></strong></a></td><% if(supplier){ %>
+          <td><%= c.contact_name||'—' %></td><% } %><td><%= c.email||'—' %></td>
+          <td><%= c.phone||'—' %></td>
+          <td class="numeric"><%= supplier?c.product_count:c.order_count %></td><% if(!supplier){ %><td class="numeric value-cell">
+            <%= money(c.spent) %></td><% } %><td><a class="icon-button" href="/<%= type %>/<%= c.id %>"
+              aria-label="View <%= c.name %>"><%- icon('chevron') %></a></td>
+        </tr><% }) %></tbody>
+    </table>
+  </div><% if(!result.rows.length){ %><div class="empty-state"><%- icon(supplier?'truck':'users') %><h3>No <%= type %> here yet</h3>
+    <p>Add your first contact or try a different search.</p><a class="button primary" href="/<%= type %>/new">Add
+      <%= type.slice(0,-1) %></a>
+  </div><% } %><%- include('partials/pagination',{result,noun:type}) %>
+</section><%- include('partials/end') %>
