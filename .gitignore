@@ -5,3 +5,7 @@ data/*.db-*
 coverage/
 tmp/
 .DS_Store
+data/backups/
+output/screenshots/
+test-results/
+playwright-report/

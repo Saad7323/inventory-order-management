@@ -1,0 +1,42 @@
+<%- include('partials/start') %><section class="page-heading">
+  <div>
+    <div class="eyebrow">A RECORD YOU CAN RELY ON</div>
+    <h1>Audit log<span class="title-dot">.</span></h1>
+    <p>Who changed what, and when. A little more peace of mind.</p>
+  </div><span class="badge in-stock"><%- icon('shield') %>Manager access</span>
+</section>
+<section class="card">
+  <div class="table-toolbar">
+    <div class="tabs"><span class="tab selected">All activity<span class="tab-count"><%= number(result.total) %></span></span></div>
+    <form class="table-search" method="get"><%- icon('search') %><input name="q" aria-label="Search audit log"
+        placeholder="Person, action, or detail..." value="<%= query.q||'' %>"></form>
+  </div>
+  <form class="filter-panel" method="get"><input type="hidden" name="q" value="<%= query.q||'' %>"><label>From<input type="date" name="from"
+        value="<%= query.from||'' %>"></label><label>To<input type="date" name="to" value="<%= query.to||'' %>"></label><button
+      class="button primary">Apply</button><a class="text-link" href="/audit">Reset</a></form>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Person</th>
+          <th>Action</th>
+          <th>Record</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody><% result.rows.forEach(a=>{ %><tr>
+          <td class="date-cell"><%= datetime(a.created_at) %></td>
+          <td><%= a.actor_name %></td>
+          <td><span class="audit-action"><%= a.action %></span></td>
+          <td><%= a.entity_type.replaceAll('_',' ') %><%= a.entity_id?' #'+a.entity_id:'' %></td>
+          <td class="audit-details"><%= a.details||'—' %></td>
+        </tr><% }) %></tbody>
+    </table>
+  </div><% if(!result.rows.length){ %><div class="empty-state"><%- icon('shield') %><h3>No matching activity</h3>
+    <p>Try another search or date range.</p>
+  </div><% } %><%- include('partials/pagination',{result,noun:'events'}) %>
+</section>
+<div class="callout"><%- icon('shield') %><p>This page is read-only. Product changes, stock adjustments, sales, cancellations, purchase
+    receiving, contact updates, account changes, exports, backups, and sign-ins create audit entries.</p>
+</div><%- include('partials/end') %>

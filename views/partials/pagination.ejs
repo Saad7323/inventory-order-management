@@ -1,0 +1,17 @@
+<div class="pagination"><span>Showing
+    <strong><%= result.total?(result.page-1)*result.limit+1:0 %>–<%= Math.min(result.page*result.limit,result.total) %></strong> of
+    <strong><%= number(result.total) %></strong> <%= typeof noun==='undefined'?'items':noun %></span>
+  <div class="pagination-controls">
+    <form method="get" data-auto-submit>
+      <% Object.entries(query).filter(([key])=>!['limit','page','notice'].includes(key)).forEach(([key,value])=>{ %><input type="hidden"
+        name="<%= key %>" value="<%= value %>"><% }) %><select name="limit" aria-label="Items per page"><% [10,25,50].forEach(size=>{ %>
+        <option value="<%= size %>" <%= result.limit===size?'selected':'' %>><%= size %> / page</option><% }) %></select></form><a
+      class="page-button <%= result.page===1?'disabled':'' %>" href="<%= url({page:Math.max(1,result.page-1)}) %>"
+      aria-label="Previous page"
+      <%- result.page===1?'aria-disabled="true" tabindex="-1"':'' %>>‹</a><% const start=Math.max(1,Math.min(result.page-2,result.pages-4)); for(let i=start;i<=Math.min(result.pages,start+4);i++){ %><a
+      class="page-button <%= i===result.page?'current':'' %>" href="<%= url({page:i}) %>"
+      <%- i===result.page?'aria-current="page"':'' %>><%= i %></a><% } %><a
+      class="page-button <%= result.page===result.pages?'disabled':'' %>" href="<%= url({page:Math.min(result.pages,result.page+1)}) %>"
+      aria-label="Next page" <%- result.page===result.pages?'aria-disabled="true" tabindex="-1"':'' %>>›</a>
+  </div>
+</div>

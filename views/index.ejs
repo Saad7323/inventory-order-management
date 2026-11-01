@@ -1,11 +1,194 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"><title>Inventory & Orders</title></head>
-<body><main><h1>Inventory &amp; Orders</h1><p>Create a confirmed order to update stock immediately.</p>
-<% if (error) { %><p class="error"><%= error %></p><% } %>
-<nav><a href="/">Dashboard</a><a href="/orders">All orders</a></nav>
-<section><h2>Current inventory</h2><form class="search" method="get" action="/"><label>Find a product <input name="q" value="<%= query %>" placeholder="SKU or name"></label><button>Search</button><a href="/">Clear</a></form><table><thead><tr><th>SKU</th><th>Product</th><th>Price</th><th>In stock</th><th>Status</th><th>Restock</th><th>Manage</th></tr></thead><tbody><% products.forEach(product => { %><tr><td><%= product.sku %></td><td><%= product.name %></td><td>$<%= product.unit_price.toFixed(2) %></td><td><%= product.stock_quantity %></td><td><%= product.stock_quantity <= product.reorder_level ? 'Low stock' : 'Available' %></td><td><form class="inline" method="post" action="/products/<%= product.id %>/restock"><input aria-label="Restock <%= product.name %>" type="number" name="quantity" min="1" value="1"><button>Restock</button></form></td><td><a href="/products/<%= product.id %>/edit">Edit</a><form class="inline" method="post" action="/products/<%= product.id %>/deactivate"><button class="danger">Deactivate</button></form></td></tr><% }) %></tbody></table><% if (!products.length) { %><p>No active products match this search.</p><% } %></section>
-<section><h2>Create order</h2><form method="post" action="/orders"><label>Customer name <input name="customerName" required></label><div id="lines"><div class="line"><label>Product <select name="productId"><% products.forEach(product => { %><option value="<%= product.id %>"><%= product.name %> (<%= product.stock_quantity %> available)</option><% }) %></select></label><label>Quantity <input type="number" name="quantity" min="1" value="1" required></label></div></div><button type="button" id="add-line">Add another product</button><button>Confirm order</button></form></section>
-<section><h2>Add product</h2><form method="post" action="/products"><label>SKU <input name="sku" required></label><label>Product name <input name="name" required></label><label>Unit price <input name="unitPrice" type="number" min="0" step="0.01" required></label><label>Opening stock <input name="stockQuantity" type="number" min="0" value="0" required></label><label>Reorder level <input name="reorderLevel" type="number" min="0" value="0" required></label><button>Add product</button></form></section>
-<section><h2>Recent orders</h2><% if (recentOrders.length) { %><table><thead><tr><th>Order</th><th>Customer</th><th>Status</th><th>Total</th></tr></thead><tbody><% recentOrders.forEach(order => { %><tr><td><a href="/orders/<%= order.id %>">#<%= order.id %></a></td><td><%= order.customer_name %></td><td><%= order.status %></td><td>$<%= order.total_amount.toFixed(2) %></td></tr><% }) %></tbody></table><% } else { %><p>No orders yet.</p><% } %></section>
-<script>document.getElementById('add-line').addEventListener('click', () => { const first = document.querySelector('.line'); const line = first.cloneNode(true); line.querySelector('input').value = 1; document.getElementById('lines').append(line); });</script>
-</main></body></html>
+<%- include('partials/start') %>
+<section class="page-heading">
+  <div>
+    <div class="eyebrow">YOUR WORKSPACE, IN SYNC</div>
+    <h1>Inventory<span class="title-dot">.</span></h1>
+    <p>A clear view of what you have, and what you need.</p>
+  </div>
+  <div class="heading-actions"><a href="/export/inventory<%= Object.keys(query).length?'?'+new URLSearchParams(query):'' %>"
+      class="button"><%- icon('down') %>Export</a><button class="button" type="button" data-toggle="inventory-filters"
+      aria-expanded="<%= !!(query.category||query.supplier||query.minPrice||query.maxPrice) %>"><%- icon('filter') %>Filters</button><% if(user.role==='manager'){ %><a
+      class="button primary" href="/products/new"><%- icon('plus') %>Add product</a><% } %></div>
+</section>
+<div class="stats-grid">
+  <article class="stat-card stat-blue">
+    <div class="stat-label">Total inventory value<span class="stat-icon"><%- icon('chart') %></span></div><strong
+      class="stat-value"><%= money(stats.value) %></strong>
+    <div class="stat-foot"><span class="stat-dot blue"></span>Across <%= stats.products %> active products</div><svg class="stat-spark"
+      viewBox="0 0 100 36" aria-hidden="true">
+      <polyline points="<%= history.slice(-10).map((p,i)=>`${i*11},${33-p.value/Math.max(stats.value,1)*26}`).join(' ') %>" fill="none"
+        stroke="#6b86e8" stroke-width="1.5" />
+    </svg>
+  </article>
+  <article class="stat-card stat-green">
+    <div class="stat-label">Total units in stock<span class="stat-icon"><%- icon('box') %></span></div><strong
+      class="stat-value"><%= number(stats.units) %></strong>
+    <div class="stat-foot"><span class="stat-dot green"></span><%= stats.healthy %> products at healthy levels</div>
+  </article>
+  <a class="stat-card stat-amber" href="<%= url({status:'low-stock',page:1}) %>">
+    <div class="stat-label">Low stock products<span class="stat-icon"><%- icon('alert') %></span></div><strong
+      class="stat-value"><%= number(stats.low) %><span class="stat-value-label">products</span></strong>
+    <div class="stat-foot"><span class="stat-dot amber"></span>Time to plan a restock</div>
+  </a>
+  <a class="stat-card stat-rose" href="<%= url({status:'out-of-stock',page:1}) %>">
+    <div class="stat-label">Out of stock<span class="stat-icon"><%- icon('box') %></span></div><strong
+      class="stat-value"><%= number(stats.out) %><span class="stat-value-label">products</span></strong>
+    <div class="stat-foot"><span class="stat-dot rose"></span><%= stats.out?'Needs your attention':'Everything is available' %></div>
+  </a>
+</div>
+<div class="inventory-insights">
+  <section class="card value-card">
+    <div class="card-header">
+      <div>
+        <h2>Inventory value over time</h2><span class="card-subtitle">Your stock, at a glance</span>
+      </div>
+      <form method="get" data-auto-submit>
+        <% Object.entries(query).filter(([key])=>!['days','notice'].includes(key)).forEach(([key,value])=>{ %><input type="hidden"
+          name="<%= key %>" value="<%= value %>"><% }) %><select name="days" aria-label="Chart time range"><% [7,30,90].forEach(d=>{ %>
+          <option value="<%= d %>" <%= days===d?'selected':'' %>>Last <%= d %> days</option><% }) %></select></form>
+    </div><% const c=chart(history); %><svg class="line-chart inventory-chart" viewBox="0 0 710 218" role="img"
+      aria-label="Inventory value over the last <%= days %> days, valued at current prices">
+      <defs>
+        <linearGradient id="valueFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#4263eb" stop-opacity=".2" />
+          <stop offset="100%" stop-color="#4263eb" stop-opacity=".01" />
+        </linearGradient>
+      </defs><% [0,1,2,3].forEach(i=>{ %>
+      <line x1="48" x2="670" y1="<%= 33+i*48.3 %>" y2="<%= 33+i*48.3 %>" class="chart-grid" /><text x="0" y="<%= 37+i*48.3 %>"
+        class="axis-label">$<%= c.max*(3-i)/3>=1000?(c.max*(3-i)/3000).toFixed(1)+'k':Math.round(c.max*(3-i)/3) %></text><% }) %>
+      <polygon points="<%= c.area %>" fill="url(#valueFill)" />
+      <polyline points="<%= c.line %>" fill="none" stroke="#4263eb" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" />
+      <% history.forEach((p,i)=>{ if(i===0||i===history.length-1||i===Math.floor(history.length/3)||i===Math.floor(history.length*2/3)){ %>
+      <circle cx="<%= 48+i*610/(history.length-1) %>" cy="<%= 178-p.value/c.max*145 %>" r="3" fill="#4263eb">
+        <title><%= p.day %>: <%= money(p.value) %></title>
+      </circle><text x="<%= 48+i*610/(history.length-1) %>" y="205" text-anchor="middle"
+        class="axis-label"><%= datetime(p.day+'T00:00:00Z',true) %></text><% } }) %>
+    </svg>
+    <div class="chart-caption"><span class="legend-dot blue"></span> Stock value <span class="muted">· At current product prices</span>
+    </div>
+  </section>
+  <section class="card stock-overview">
+    <div class="card-header">
+      <div>
+        <h2>Stock status</h2><span class="card-subtitle">A healthy balance</span>
+      </div><span class="small-icon"><%- icon('box') %></span>
+    </div>
+    <div class="donut-wrap"><svg viewBox="0 0 160 160" class="donut" role="img"
+        aria-label="<%= stats.healthy %> in stock, <%= stats.low %> low stock, <%= stats.out %> out of stock">
+        <circle cx="80" cy="80" r="62" fill="none" stroke="#edf0f6" stroke-width="14" />
+        <% let offset=0; [['#18a77b',stats.healthy],['#f2aa3b',stats.low],['#ed6b74',stats.out]].forEach(([color,count])=>{ const length=count/Math.max(stats.products,1)*389.56; %>
+        <circle cx="80" cy="80" r="62" fill="none" stroke="<%= color %>" stroke-width="14"
+          stroke-dasharray="<%= Math.max(0,length-3) %> <%= 389.56-Math.max(0,length-3) %>" stroke-dashoffset="<%= -offset %>"
+          transform="rotate(-90 80 80)" /><% offset+=length; }) %><text x="80" y="79" text-anchor="middle"
+          class="donut-number"><%= stats.products %></text><text x="80" y="99" text-anchor="middle" class="donut-label">Total
+          products</text>
+      </svg></div>
+    <div class="stock-legend">
+      <% [['green','In stock',stats.healthy],['amber','Low stock',stats.low],['rose','Out of stock',stats.out]].forEach(([color,label,count])=>{ %>
+      <div><span><i
+            class="legend-dot <%= color %>"></i><%= label %></span><strong><%= count %><small><%= Math.round(count/Math.max(stats.products,1)*100) %>%</small></strong>
+      </div><% }) %></div>
+  </section>
+  <section class="card low-stock-card">
+    <div class="card-header">
+      <div>
+        <h2>Needs a little attention</h2><span class="card-subtitle">Restock before you run out</span>
+      </div><span class="alert-pip"><%= lowCount %></span>
+    </div>
+    <div class="low-list"><% lowProducts.forEach(product=>{ %><a
+        href="<%= user.role==='manager'?'/products/'+product.id+'/edit':'/?q='+encodeURIComponent(product.sku) %>" class="low-product"><span
+          class="product-image <%= product.category.toLowerCase() %>"><%- icon(productIcon(product)) %></span><span
+          class="low-product-info"><strong><%= product.name %></strong><small><%= product.sku %></small></span><span
+          class="stock-count <%= product.stock_quantity?'amber-text':'rose-text' %>"><%= product.stock_quantity %><small>left</small></span></a><% }) %><% if(!lowProducts.length){ %>
+      <div class="mini-empty"><%- icon('check') %><strong>Looking good!</strong>
+        <p>All products are above reorder level.</p>
+      </div><% } %></div><a class="card-bottom-link" href="/?status=needs-restock">View all restock alerts <%- icon('arrow') %></a>
+  </section>
+</div>
+<section class="card inventory-table-card">
+  <div class="table-toolbar">
+    <nav class="tabs" aria-label="Inventory status"><% if(query.status==='needs-restock'){ %><a class="tab selected"
+        href="<%= url({status:'needs-restock',page:1}) %>" aria-current="page">Restock
+        alerts</a><% } %><% [['all','All inventory'],['in-stock','In stock'],['low-stock','Low stock'],['out-of-stock','Out of stock'],['discontinued','Discontinued']].forEach(([key,label])=>{ %><a
+        class="tab <%= (query.status||'all')===key?'selected':'' %>" href="<%= url({status:key,page:1}) %>"
+        <%- (query.status||'all')===key?'aria-current="page"':'' %>><%= label %><% if(key==='all'){ %><span
+          class="tab-count"><%= stats.products %></span><% } %></a><% }) %></nav>
+    <form class="table-search" method="get"><%- icon('search') %><input name="q" aria-label="Search inventory"
+        placeholder="Search inventory..."
+        value="<%= query.q||'' %>"><% Object.entries(query).filter(([key])=>!['q','page','notice'].includes(key)).forEach(([key,value])=>{ %><input
+        type="hidden" name="<%= key %>" value="<%= value %>"><% }) %></form>
+  </div>
+  <form class="filter-panel <%= query.category||query.supplier||query.minPrice||query.maxPrice?'':'hidden' %>" id="inventory-filters"
+    method="get"><input type="hidden" name="status" value="<%= query.status||'all' %>"><input type="hidden" name="q"
+      value="<%= query.q||'' %>"><label>Category<select name="category">
+        <option value="">All categories</option><% categories.forEach(c=>{ %><option <%= query.category===c.category?'selected':'' %>>
+          <%= c.category %></option><% }) %>
+      </select></label><label>Supplier<select name="supplier">
+        <option value="">All suppliers</option><% suppliers.forEach(s=>{ %><option value="<%= s.id %>"
+          <%= Number(query.supplier)===s.id?'selected':'' %>><%= s.name %></option><% }) %>
+      </select></label><label>Min. price<input type="number" min="0" step="0.01" name="minPrice" placeholder="$0.00"
+        value="<%= query.minPrice||'' %>"></label><label>Max. price<input type="number" min="0" step="0.01" name="maxPrice"
+        placeholder="No limit" value="<%= query.maxPrice||'' %>"></label><label>Sort by<select
+        name="sort"><% [['name','Product name'],['stock','Stock quantity'],['value','Stock value'],['price','Unit price'],['updated','Last updated']].forEach(([key,label])=>{ %>
+        <option value="<%= key %>" <%= query.sort===key?'selected':'' %>><%= label %></option>
+        <% }) %></select></label><label>Direction<select name="direction">
+        <option value="asc">Ascending</option>
+        <option value="desc" <%= query.direction==='desc'?'selected':'' %>>Descending</option>
+      </select></label><button class="button primary">Apply filters</button><a href="/" class="text-link">Reset</a></form>
+  <div class="table-scroll">
+    <table class="inventory-table">
+      <thead>
+        <tr>
+          <th>Product <a href="<%= url({sort:'name',direction:query.direction==='desc'?'asc':'desc'}) %>"
+              aria-label="Sort products by name">↕</a></th>
+          <th>SKU</th>
+          <th>Category</th>
+          <th class="numeric">Stock qty <a href="<%= url({sort:'stock',direction:query.direction==='desc'?'asc':'desc'}) %>"
+              aria-label="Sort by stock quantity">↕</a></th>
+          <th class="numeric">Reorder at</th>
+          <th class="numeric">Unit price</th>
+          <th class="numeric">Stock value</th>
+          <th>Status</th>
+          <th>Last updated</th><% if(user.role==='manager'){ %><th><span class="sr-only">Actions</span></th><% } %>
+        </tr>
+      </thead>
+      <tbody><% result.rows.forEach(product=>{ const st=status(product); %><tr>
+          <td>
+            <div class="product-cell"><span
+                class="product-image <%= product.category.toLowerCase().replace(/[^a-z]/g,'') %>"><%- icon(productIcon(product)) %></span><% if(user.role==='manager'){ %><a
+                href="/products/<%= product.id %>/edit"
+                class="product-name"><%= product.name %></a><% } else { %><strong><%= product.name %></strong><% } %></div>
+          </td>
+          <td class="sku"><%= product.sku %></td>
+          <td><span class="category-label"><%= product.category %></span></td>
+          <td class="numeric stock-quantity <%= st==='low-stock'?'amber-text':st==='out-of-stock'?'rose-text':'green-text' %>">
+            <%= number(product.stock_quantity) %></td>
+          <td class="numeric muted"><%= product.reorder_level %></td>
+          <td class="numeric"><%= money(product.unit_price) %></td>
+          <td class="numeric value-cell"><%= money(product.unit_price*product.stock_quantity) %></td>
+          <td><span class="badge <%= st %>"><i></i><%= statusLabel(st) %></span></td>
+          <td class="date-cell"><%= datetime(product.updated_at,true) %></td><% if(user.role==='manager'){ %><td><button
+              class="icon-button row-action" type="button" aria-label="Adjust stock for <%= product.name %>" title="Adjust stock"
+              data-adjust-id="<%= product.id %>" data-adjust-name="<%= product.name %>"
+              <%= product.active?'':'disabled' %>><%- icon('arrows') %></button></td><% } %>
+        </tr><% }) %></tbody>
+    </table>
+  </div><% if(!result.rows.length){ %><div class="empty-state"><%- icon('search') %><h3>No products found</h3>
+    <p>Try a different search or clear your filters.</p><a href="/" class="button">Clear filters</a>
+  </div><% } %><%- include('partials/pagination',{result,noun:'products'}) %>
+</section>
+<% if(user.role==='manager'){ %><dialog id="adjust-dialog" class="modal">
+  <div class="modal-header">
+    <div><span class="eyebrow">KEEP YOUR NUMBERS RIGHT</span>
+      <h2>Adjust stock</h2>
+    </div><button class="icon-button" type="button" data-close-dialog aria-label="Close"><%- icon('close') %></button>
+  </div>
+  <p id="adjust-product-name" class="muted"></p>
+  <form method="post" id="adjust-form" class="stack-form"><%- include('partials/csrf') %><label>Quantity change<input name="quantity"
+        type="number" required min="-100000000" max="100000000" placeholder="e.g. 10 or -2"></label>
+    <p class="form-hint">Use a positive number to add stock, or a negative number for damage or corrections.</p><label>Reason<input
+        name="reason" required maxlength="300" placeholder="e.g. Delivery received or damaged goods"></label><button
+      class="button primary">Record adjustment</button>
+  </form>
+</dialog><% } %>
+<%- include('partials/end') %>

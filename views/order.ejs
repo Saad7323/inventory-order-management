@@ -1,1 +1,65 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="/styles.css"><title>Order confirmed</title></head><body><main><h1>Order #<%= order.id %> confirmed</h1><p>Customer: <%= order.customer_name %></p><table><thead><tr><th>Product</th><th>Quantity</th><th>Unit price</th></tr></thead><tbody><% items.forEach(item => { %><tr><td><%= item.name %></td><td><%= item.quantity %></td><td>$<%= item.unit_price.toFixed(2) %></td></tr><% }) %></tbody></table><p><strong>Total: $<%= order.total_amount.toFixed(2) %></strong></p><p><a href="/">Return to inventory</a></p></main></body></html>
+<%- include('partials/start') %><a class="back-link" href="/orders"><%- icon('arrow') %>Back to sales orders</a>
+<section class="page-heading">
+  <div>
+    <div class="eyebrow">SALES ORDER</div>
+    <h1>#SO-<%= String(order.id).padStart(4,'0') %><span class="title-dot">.</span></h1>
+    <p>Placed <%= datetime(order.created_at) %> <%= order.created_by_name?'by '+order.created_by_name:'' %></p>
+  </div>
+  <div class="heading-actions"><span class="badge <%= order.status %>"><i></i><%= statusLabel(order.status) %></span><button class="button"
+      type="button" data-print><%- icon('report') %>Print order</button></div>
+</section>
+<div class="detail-layout">
+  <section class="card">
+    <div class="table-section-header">
+      <h2>Order items</h2><span class="muted"><%= items.length %> product lines</span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>SKU</th>
+            <th class="numeric">Quantity</th>
+            <th class="numeric">Unit price</th>
+            <th class="numeric">Total</th>
+          </tr>
+        </thead>
+        <tbody><% items.forEach(item=>{ %><tr>
+            <td>
+              <div class="product-cell"><span class="product-image"><%- icon(productIcon(item)) %></span><strong><%= item.name %></strong>
+              </div>
+            </td>
+            <td class="sku"><%= item.sku %></td>
+            <td class="numeric"><%= item.quantity %></td>
+            <td class="numeric"><%= money(item.unit_price) %></td>
+            <td class="numeric value-cell"><%= money(item.quantity*item.unit_price) %></td>
+          </tr><% }) %></tbody>
+      </table>
+    </div>
+    <div class="card-body">
+      <div class="summary-row total"><span>Order total</span><strong><%= money(order.total_amount) %></strong></div>
+    </div>
+  </section>
+  <aside class="detail-aside">
+    <section class="card info-card">
+      <h2>Customer</h2>
+      <dl>
+        <dt>Name</dt>
+        <dd><a href="/customers/<%= order.customer_id %>" class="text-link"><%= order.customer_name %></a></dd>
+        <dt>Email</dt>
+        <dd><%= order.email||'Not provided' %></dd>
+        <dt>Phone</dt>
+        <dd><%= order.phone||'Not provided' %></dd>
+        <dt>Address</dt>
+        <dd><%= order.address||'Not provided' %></dd>
+      </dl>
+    </section>
+    <section class="card info-card">
+      <h2>Order status</h2><% if(order.status==='confirmed'){ %><p>This order is confirmed and its stock has been deducted.</p>
+      <% if(user.role==='manager'){ %><form method="post" action="/orders/<%= order.id %>/cancel"
+        data-confirm="Cancel this order and restore all of its stock? This action cannot be undone."><%- include('partials/csrf') %><button
+          class="button danger full">Cancel & restore stock</button></form><% } %><% } else { %><p>Cancelled
+        <%= datetime(order.cancelled_at) %>. All ordered quantities were restored, including stock of discontinued products.</p><% } %>
+    </section>
+  </aside>
+</div><%- include('partials/end') %>

@@ -1,1 +1,63 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="/styles.css"><title>Edit product</title></head><body><main><nav><a href="/">Dashboard</a><a href="/orders">All orders</a></nav><h1>Edit product</h1><p>Current stock: <strong><%= product.stock_quantity %></strong>. Use restocking on the dashboard to change stock and retain the audit trail.</p><% if (error) { %><p class="error"><%= error %></p><% } %><form method="post" action="/products/<%= product.id %>"><label>SKU <input name="sku" value="<%= product.sku %>" required></label><label>Product name <input name="name" value="<%= product.name %>" required></label><label>Unit price <input name="unitPrice" type="number" min="0" step="0.01" value="<%= product.unit_price %>" required></label><label>Reorder level <input name="reorderLevel" type="number" min="0" value="<%= product.reorder_level %>" required></label><button>Save changes</button></form></main></body></html>
+<%- include('partials/start') %><a class="back-link" href="/"><%- icon('arrow') %>Back to inventory</a>
+<section class="page-heading">
+  <div>
+    <div class="eyebrow">A PLACE FOR EVERY PRODUCT</div>
+    <h1><%= product?'Edit product':'Add product' %><span class="title-dot">.</span></h1>
+    <p><%= product?'Keep your catalogue current and your stock traceable.':'Good inventory starts with the details.' %></p>
+  </div><% if(product){ %><span class="badge <%= status(product) %>"><i></i><%= statusLabel(status(product)) %></span><% } %>
+</section>
+<div class="detail-layout">
+  <form class="card form-card stack-form" method="post" action="<%= product?'/products/'+product.id:'/products' %>">
+    <%- include('partials/csrf') %><div>
+      <h2>Product details</h2>
+      <p class="section-subtitle">The information your team needs, all in one place.</p>
+    </div>
+    <div class="form-grid"><label class="span-2">Product name<input name="name" required maxlength="160" value="<%= product?.name||'' %>"
+          placeholder="e.g. Wireless Keyboard"></label><label>SKU<input name="sku" required maxlength="60" value="<%= product?.sku||'' %>"
+          placeholder="e.g. KB-100"></label><label>Category<input name="category" required maxlength="60"
+          value="<%= product?.category||'General' %>" list="category-options"><datalist id="category-options">
+          <option>Electronics</option>
+          <option>Accessories</option>
+          <option>Furniture</option>
+          <option>Office</option>
+        </datalist></label><label>Unit price ($)<input type="number" name="unitPrice" required min="0" max="10000000" step=".01"
+          value="<%= product?.unit_price??'' %>" placeholder="0.00"></label><label>Reorder level<input type="number" name="reorderLevel"
+          required min="0" max="100000000" value="<%= product?.reorder_level??5 %>"></label><% if(!product){ %><label>Opening quantity<input
+          name="stockQuantity" type="number" required min="0" max="100000000" value="0"></label><% } %></div>
+    <div class="form-section">
+      <div class="subheading">Suppliers</div>
+      <p class="section-subtitle">Associate suppliers to include this product on purchase orders.</p><input type="hidden" name="supplierIds"
+        value="">
+      <div class="checkbox-list"><% suppliers.forEach(s=>{ %><label><input type="checkbox" name="supplierIds" value="<%= s.id %>"
+            <%= selectedSuppliers.includes(s.id)?'checked':'' %>><%= s.name %></label><% }) %><% if(!suppliers.length){ %><p
+          class="form-hint">Add a supplier first, then associate it here.</p><% } %></div>
+    </div>
+    <div class="form-actions"><a class="button" href="/">Cancel</a><button
+        class="button primary"><%- icon('check') %><%= product?'Save changes':'Add product' %></button></div>
+  </form>
+  <aside class="detail-aside"><% if(product){ %><section class="card info-card">
+      <h2>Stock on hand</h2><strong class="stat-value"><%= number(product.stock_quantity) %><span
+          class="stat-value-label">units</span></strong>
+      <p>Stock changes are always recorded in the movement history.</p><% if(product.active){ %><form class="stack-form form-section"
+        method="post" action="/products/<%= product.id %>/adjust"><%- include('partials/csrf') %><label>Quantity change<input type="number"
+            name="quantity" required min="-100000000" max="100000000" placeholder="e.g. 10 or -2"></label><label>Reason<input name="reason"
+            required maxlength="300" placeholder="e.g. Stock received"></label><button class="button primary full">Record
+          adjustment</button></form><% } %><a class="text-link" href="/movements?product=<%= product.id %>" style="margin-top:18px">View
+        movement history <%- icon('arrow') %></a>
+    </section>
+    <section class="card info-card">
+      <h2>Product lifecycle</h2>
+      <p>
+        <%= product.active?'Discontinue this product to stop new sales. Order and stock history will be retained.':'This product is discontinued. Reactivate it to make it available for new orders.' %>
+      </p>
+      <form method="post" action="/products/<%= product.id %>/<%= product.active?'deactivate':'reactivate' %>"
+        data-confirm="<%= product.active?'Discontinue this product?':'Reactivate this product?' %>"><%- include('partials/csrf') %><button
+          class="button <%= product.active?'danger':'primary' %> full"><%= product.active?'Discontinue product':'Reactivate product' %></button>
+      </form>
+    </section><% } else { %><section class="card info-card"><span class="backup-card-icon"><%- icon('box') %></span>
+      <h2>Start with good foundations.</h2>
+      <p>Each SKU is unique. Opening stock creates the first entry in your product’s movement history. You can adjust stock with a reason at
+        any time.</p>
+    </section><% } %>
+  </aside>
+</div><%- include('partials/end') %>

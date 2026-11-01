@@ -1,55 +1,45 @@
-# Prioritised Backlog and Use Cases
+# Feature and Use-Case Map
 
-## Backlog
+The initial evaluation scope has been extended to the following working workflows.
 
-| Priority | Backlog item | Status |
-|---|---|---|
-| Must | View inventory and low-stock state | Implemented |
-| Must | Add a product | Implemented |
-| Must | Restock a product with an audit entry | Implemented |
-| Must | Confirm stock-validated multi-line orders | Implemented |
-| Must | Preserve inventory changes atomically | Implemented |
-| Should | View an order list and order details | Implemented |
-| Could | Edit/deactivate products | Not started |
-| Could | Filter/search inventory and orders | Not started |
-| Could | Authentication and role-based access | Out of current scope |
+| Feature                                      | Primary route                              | Actor           |
+| -------------------------------------------- | ------------------------------------------ | --------------- |
+| Stock movement history                       | `/movements`                               | Staff / manager |
+| Low-stock and zero-stock alerts              | `/`                                        | Staff / manager |
+| Sales analytics and order statistics         | `/dashboard`                               | Manager         |
+| Inventory and sales date-range reports       | `/reports`                                 | Manager         |
+| Filtered inventory and order CSV             | `/export/inventory`, `/export/orders`      | Staff / manager |
+| Transactional order cancellation             | `/orders/:id`                              | Manager         |
+| Customer details and history                 | `/customers`                               | Staff / manager |
+| Supplier contacts and product associations   | `/suppliers`                               | Manager         |
+| Purchase creation / receiving / cancellation | `/purchases`                               | Manager         |
+| First-run setup and login                    | `/setup`, `/login`                         | Account holder  |
+| Account roles / session revocation           | `/settings`                                | Manager         |
+| Combined search and filters                  | Inventory, sales, movements, global search | As permitted    |
+| Pagination                                   | List screens                               | As permitted    |
+| Complete database backup / restore           | `/backup`                                  | Manager         |
+| Important action history                     | `/audit`                                   | Manager         |
 
-## UC-01: Confirm customer order
+## Confirm a sale
 
-**Primary actor:** Order-processing staff
+Choose an existing customer or enter a new name. Add one or more products and quantities. The server combines duplicate product lines, rechecks available stock, captures prices, creates the order/items, deducts stock, and records movements and an audit event. A failure rolls back the customer creation and all order/stock writes.
 
-**Preconditions:** Products exist with available stock.
+## Cancel a sale
 
-**Main flow:**
+A manager opens a confirmed order and selects **Cancel & restore stock**. The order state, all restored quantities, movements, and audit event are committed together. Repeated cancellation is rejected. Discontinued product quantities are also restored, preserving the ledger.
 
-1. Staff enters a customer name.
-2. Staff selects one or more products and quantities.
-3. Staff confirms the order.
-4. The system combines duplicate product lines and checks stock availability.
-5. The system creates the order and its items.
-6. The system deducts inventory and creates negative stock-movement records.
-7. The system displays the confirmation and total.
+## Receive a supplier delivery
 
-**Alternative flow:** If any requested quantity exceeds stock, the system shows an error and stores no order or inventory change.
+A manager creates a supplier profile and associates products. A purchase order contains associated active products, quantities, and unit costs. Creation leaves on-hand stock unchanged. **Receive goods** adds every ordered quantity, writes movement references, and marks the purchase received in one transaction. A pending purchase can instead be cancelled. Completed purchases cannot be received again.
 
-## UC-02: Restock product
+## Review a reporting period
 
-**Primary actor:** Inventory manager
+Select inclusive start and end dates on Overview or Reports. Review confirmed sales, total/cancelled orders, average order value, and product performance. The inventory report shows opening quantity, increases, decreases, and closing quantity for all products. CSV and browser-print options produce shareable reports. Dates use UTC; inventory values use current catalogue prices.
 
-**Preconditions:** The product exists and is active.
+## Manage access
 
-**Main flow:**
+A manager creates individual staff or manager accounts. Staff can process sales and customer records while restricted management routes return 403. Access changes and account disabling revoke sessions. The current manager cannot remove their own manager access. Users can change their own password.
 
-1. The manager enters a positive restock quantity beside a product.
-2. The system increases its stock quantity.
-3. The system records a positive `Stock restock` movement.
+## Recover a workspace
 
-## UC-03: Add product
-
-**Primary actor:** Inventory manager
-
-**Main flow:**
-
-1. The manager supplies a SKU, name, price, opening stock, and reorder level.
-2. The system validates the values and SKU uniqueness.
-3. The system saves the product and displays it in inventory.
+Download a complete backup. To restore, select the file and type `RESTORE`. The server validates the snapshot in an isolated database, saves a pre-restore safety copy, and atomically replaces data. Successful restore signs out all sessions. Invalid backups leave live data untouched.

@@ -1,0 +1,23 @@
+<% const c=chart(daily,'revenue'); %>
+<% if(!daily.length){ %><div class="chart-empty">
+  <div class="empty-symbol"><%- icon('chart') %></div><strong>Your next sale starts the story.</strong>
+  <p>Confirmed orders will appear here for this date range.</p><a href="/orders/new" class="text-link">Create your first order
+    <%- icon('arrow') %></a>
+</div><% } else { %>
+<svg class="line-chart" viewBox="0 0 710 218" role="img" aria-label="Confirmed sales revenue over the selected period">
+  <defs>
+    <linearGradient id="salesFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4263eb" stop-opacity=".2" />
+      <stop offset="100%" stop-color="#4263eb" stop-opacity=".01" />
+    </linearGradient>
+  </defs><% [0,1,2,3].forEach(i=>{ %>
+  <line x1="48" x2="670" y1="<%= 33+i*48.3 %>" y2="<%= 33+i*48.3 %>" class="chart-grid" /><text x="0" y="<%= 37+i*48.3 %>"
+    class="axis-label"><%= money(c.max*(3-i)/3).replace('.00','') %></text><% }) %>
+  <polygon points="<%= c.area %>" fill="url(#salesFill)" />
+  <polyline points="<%= c.line %>" fill="none" stroke="#4263eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+  <% daily.forEach((p,i)=>{ %><circle cx="<%= 48+i*610/Math.max(1,daily.length-1) %>" cy="<%= 178-p.revenue/c.max*145 %>" r="3"
+    fill="#4263eb">
+    <title><%= p.day %>: <%= money(p.revenue) %></title>
+  </circle><% if(i===0||i===daily.length-1||i===Math.floor(daily.length/2)){ %><text x="<%= 48+i*610/Math.max(1,daily.length-1) %>" y="205"
+    text-anchor="middle" class="axis-label"><%= datetime(p.day+'T00:00:00Z',true) %></text><% } }) %>
+</svg><% } %>

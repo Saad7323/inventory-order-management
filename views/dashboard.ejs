@@ -1,0 +1,85 @@
+<%- include('partials/start') %><section class="page-heading">
+  <div>
+    <div class="eyebrow">THE BIG PICTURE</div>
+    <h1>Business overview<span class="title-dot">.</span></h1>
+    <p>Your sales, your stock, your next move.</p>
+  </div>
+  <form method="get" class="range-form"><label>From<input type="date" name="from" value="<%= from %>" required></label><label>To<input
+        type="date" name="to" value="<%= to %>" required></label><button class="button">Update view</button></form>
+</section>
+<div class="stats-grid">
+  <article class="stat-card stat-blue">
+    <div class="stat-label">Net sales<span class="stat-icon"><%- icon('chart') %></span></div><strong
+      class="stat-value"><%= money(stats.revenue) %></strong>
+    <div class="stat-foot"><span class="stat-dot blue"></span>Confirmed orders only</div>
+  </article>
+  <article class="stat-card stat-green">
+    <div class="stat-label">Total orders<span class="stat-icon"><%- icon('orders') %></span></div><strong
+      class="stat-value"><%= number(stats.orders) %></strong>
+    <div class="stat-foot"><span class="stat-dot green"></span><%= stats.confirmed %> confirmed · <%= stats.cancelled %> cancelled</div>
+  </article>
+  <article class="stat-card stat-amber">
+    <div class="stat-label">Average order value<span class="stat-icon"><%- icon('report') %></span></div><strong
+      class="stat-value"><%= money(stats.average) %></strong>
+    <div class="stat-foot"><span class="stat-dot amber"></span>Per confirmed order</div>
+  </article><a href="/?status=needs-restock" class="stat-card stat-rose">
+    <div class="stat-label">Products needing restock<span class="stat-icon"><%- icon('alert') %></span></div><strong
+      class="stat-value"><%= inventory.low+inventory.out %></strong>
+    <div class="stat-foot"><span class="stat-dot rose"></span>Current inventory alert count</div>
+  </a>
+</div>
+<div class="two-column">
+  <section class="card">
+    <div class="card-header">
+      <div>
+        <h2>Sales over time</h2><span
+          class="card-subtitle"><%= trend.interval===1?'Daily revenue':'Revenue in '+trend.interval+'-day intervals' %> · <%= from %> to
+          <%= to %> · UTC</span>
+      </div><span class="legend-dot blue"></span>
+    </div><%- include('partials/sales-chart',{daily:trend.points}) %>
+  </section>
+  <section class="card">
+    <div class="card-header">
+      <div>
+        <h2>Top selling products</h2><span class="card-subtitle">Ranked by confirmed sales value</span>
+      </div><%- icon('chart') %>
+    </div>
+    <div class="card-body"><% if(top.length){ %><div class="data-list"><% top.forEach((p,i)=>{ %><div class="data-list-item"><span
+            class="rank"><%= i+1 %></span>
+          <div><strong><%= p.name %></strong><small><%= p.units %> units sold · <%= p.sku %></small></div><span
+            class="amount"><%= money(p.revenue) %></span>
+        </div><% }) %></div><% } else { %><div class="mini-empty"><%- icon('box') %><strong>Room for your bestsellers</strong>
+        <p>Your top products appear after your first sale.</p>
+      </div><% } %></div>
+  </section>
+</div>
+<section class="card">
+  <div class="table-section-header">
+    <div>
+      <h2>Latest orders</h2>
+      <p>Your most recent activity · All dates</p>
+    </div><a class="text-link" href="/orders">View all orders <%- icon('arrow') %></a>
+  </div>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Order</th>
+          <th>Customer</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th class="numeric">Total</th>
+        </tr>
+      </thead>
+      <tbody><% recentOrders.forEach(o=>{ %><tr>
+          <td><a class="text-link" href="/orders/<%= o.id %>">#SO-<%= String(o.id).padStart(4,'0') %></a></td>
+          <td><%= o.customer_name %></td>
+          <td class="date-cell"><%= datetime(o.created_at) %></td>
+          <td><span class="badge <%= o.status %>"><i></i><%= statusLabel(o.status) %></span></td>
+          <td class="numeric value-cell"><%= money(o.total_amount) %></td>
+        </tr><% }) %></tbody>
+    </table>
+  </div><% if(!recentOrders.length){ %><div class="empty-state"><%- icon('orders') %><h3>A fresh start</h3>
+    <p>Create your first order to get things moving.</p><a class="button primary" href="/orders/new">Create order</a>
+  </div><% } %>
+</section><%- include('partials/end') %>

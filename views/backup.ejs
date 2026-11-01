@@ -1,0 +1,35 @@
+<%- include('partials/start') %><section class="page-heading">
+  <div>
+    <div class="eyebrow">A LITTLE PREPARATION GOES A LONG WAY</div>
+    <h1>Backup & restore<span class="title-dot">.</span></h1>
+    <p>Keep a safe copy of the work that keeps your business moving.</p>
+  </div>
+</section>
+<div class="account-layout">
+  <section class="card form-card"><span class="backup-card-icon"><%- icon('down') %></span>
+    <h2>Take your data with you.</h2>
+    <p class="backup-description">Download a complete, portable JSON backup of your products, stock history, sales, contacts, suppliers,
+      purchase orders, team accounts, and audit log.</p><a class="button primary" href="/backup/download"><%- icon('down') %>Download
+      database backup</a>
+    <div class="callout"><%- icon('shield') %><p>The backup includes contact details and password hashes. Store it in a private location.
+        Active sessions are excluded.</p>
+    </div>
+  </section>
+  <section class="card form-card"><span class="backup-card-icon"><%- icon('clock') %></span>
+    <h2>Get back to a known point.</h2>
+    <p class="backup-description">Restore a StockPilot backup to replace all workspace data and accounts. The backup is validated first, and
+      a safety copy of your current data is saved locally before restoring. Everyone will be signed out.</p>
+    <form class="stack-form" method="post" action="/backup/restore"
+      data-confirm="Replace all workspace data and accounts with this backup? You will need to sign in using an account from that backup.">
+      <%- include('partials/csrf') %><label>Backup file<input type="file" id="backup-file" required
+          accept=".json,application/json"></label><input type="hidden" name="backup" id="backup-content">
+      <p class="form-hint" id="backup-file-status" role="status">StockPilot JSON backup · Maximum 7 MB</p><label>Type RESTORE to
+        confirm<input name="restoreConfirm" required pattern="RESTORE" placeholder="RESTORE" autocomplete="off"></label><button
+        class="button danger">Restore database</button>
+    </form>
+  </section>
+</div>
+<div class="callout"><%- icon('report') %><p>Safety backups are saved in <code>data/backups/</code>. To undo a restore, select the latest
+    pre-restore JSON file here. Backups are validated for schema, references, inventory balances, and order totals before any current data
+    is replaced.</p>
+</div><%- include('partials/end') %>

@@ -1,31 +1,25 @@
-# 5-7 Minute Demonstration Script
+# Demonstration Script
 
-## Before recording
+## Prepare
 
-- Run `npm install` once, then `npm start`.
-- Open `http://localhost:3000` in a browser.
-- Keep the terminal and the test command ready, but do not claim a test result you have not just run.
-- Use the seeded products or add your own realistic sample products.
+Use Node.js 24+, run `npm ci`, then `npm start`. On a fresh database, create a manager account at http://localhost:3000. Do not delete an existing database to reset a demo; use the backup workflow or set a separate `DATABASE_PATH`. The sample catalogue has products at healthy, low, and zero stock. Sales start empty.
 
-## Script
+## Suggested 7-minute walkthrough
 
-| Time | Show | Narration prompt |
-|---|---|---|
-| 0:00-0:35 | Dashboard | “This Inventory and Order Management System helps staff prevent overselling and track stock changes.” |
-| 0:35-1:15 | Inventory table | “The dashboard shows SKU, price, quantity, and low-stock status. USB-C Hub is marked low stock because it is at or below its reorder level.” |
-| 1:15-1:50 | Add product | “An inventory manager can add a new product with a unique SKU, opening stock, and reorder threshold.” |
-| 1:50-2:25 | Restock | “Restocking changes the quantity through a dedicated action, which records an audit movement rather than silently editing stock.” |
-| 2:25-3:35 | Multi-line order | “Order staff enter a customer, select one or more products, and confirm the order. The system checks combined requested quantities before it saves anything.” |
-| 3:35-4:10 | Confirmation and inventory | “The confirmation page shows the completed order; returning to inventory shows the reduced stock.” |
-| 4:10-4:40 | Insufficient-stock attempt | “An oversized quantity produces a clear error and does not create a partial order or change inventory.” |
-| 4:40-5:15 | Order history and search | “Staff can find orders by customer or number, and products by SKU or name. Products can also be edited or deactivated.” |
-| 5:15-6:00 | Architecture and tests | “The Express app uses SQLite. Order confirmation is transactional, and the test suite verifies product, stock, order, error, and web-flow cases.” |
-| 6:00-6:30 | Close | “The current scope focuses on reliable inventory and ordering. Payments, supplier integrations, and authentication are listed as future work.” |
+| Time      | Show                    | Explain                                                                                                                                                                     |
+| --------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0:00–0:45 | Inventory               | Summary values, actual value history, status distribution, restock list, and responsive navy-sidebar design.                                                                |
+| 0:45–1:25 | Filters and pagination  | Combine category, status, supplier, and price filters. Change page size. Export all matching inventory rows.                                                                |
+| 1:25–2:10 | Customers and sales     | Create a customer contact and a multi-line order. Show the captured total, reduced stock, customer history, and stock movements.                                            |
+| 2:10–2:45 | Cancellation            | Cancel the confirmed order and show restored stock. The cancellation action disappears because it cannot run twice.                                                         |
+| 2:45–3:35 | Suppliers and purchases | Open the sample supplier, review associations, create a purchase order, and receive goods. Show the referenced positive stock movement.                                     |
+| 3:35–4:20 | Overview and Reports    | Select dates, review confirmed revenue/order statistics, generate inventory/sales reports, and download CSV. Explain current-price valuation.                               |
+| 4:20–5:10 | Settings and roles      | Create a staff account. In a separate browser session, sign in as staff and show permitted sales/customer pages and a denied manager route.                                 |
+| 5:10–5:50 | Audit and backups       | Show action/actor history. Download a backup and explain validated atomic restore, safety copies, and session revocation. Restore only on a demo database.                  |
+| 5:50–7:00 | Tests and architecture  | Run `npm run test:all` with Google Chrome installed. Show actual results. Explain immediate SQLite transactions, scrypt, server permission checks, and the movement ledger. |
 
-## Recording checklist
+## Evidence
 
-- [ ] Keep the video between five and seven minutes.
-- [ ] Ensure text is legible at the recording resolution.
-- [ ] Show the order confirmation and changed inventory quantity.
-- [ ] Show actual `npm test` output from the final code snapshot.
-- [ ] Do not show personal API keys, account information, or unrelated browser tabs.
+Capture actual test output from the final code version. Browser tests save desktop inventory, sales overview, and mobile screenshots under `output/screenshots/`. Do not claim external deployment, accounting-grade historical valuation, partial receiving, payments, or multi-warehouse support.
+
+The original midsemester report/PDF remains a historical artifact; README, architecture, use-case map, and this script describe the expanded application.

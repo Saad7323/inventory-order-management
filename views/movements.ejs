@@ -1,0 +1,60 @@
+<%- include('partials/start') %><section class="page-heading">
+  <div>
+    <div class="eyebrow">THE STORY BEHIND YOUR STOCK</div>
+    <h1>Stock movements<span class="title-dot">.</span></h1>
+    <p>Every increase, every decrease. Always accounted for.</p>
+  </div><a class="button" href="/"><%- icon('box') %>View inventory</a>
+</section>
+<section class="card">
+  <div class="table-toolbar">
+    <nav class="tabs"><% [['','All movements'],['in','Stock in'],['out','Stock out']].forEach(([key,label])=>{ %><a
+        class="tab <%= (query.direction||'')===key?'selected':'' %>" href="<%= url({direction:key,page:1}) %>"><%= label %></a><% }) %>
+    </nav>
+    <form method="get" class="table-search"><%- icon('search') %><input name="q" value="<%= query.q||'' %>"
+        placeholder="Product, SKU, or reason..."
+        aria-label="Search movements"><% Object.entries(query).filter(([key])=>!['q','page','notice'].includes(key)).forEach(([key,value])=>{ %><input
+        type="hidden" name="<%= key %>" value="<%= value %>"><% }) %></form>
+  </div>
+  <form method="get" class="filter-panel"><input type="hidden" name="q" value="<%= query.q||'' %>"><input type="hidden" name="direction"
+      value="<%= query.direction||'' %>"><label>Product<select name="product">
+        <option value="">All products</option><% products.forEach(p=>{ %><option value="<%= p.id %>"
+          <%= Number(query.product)===p.id?'selected':'' %>><%= p.name %></option><% }) %>
+      </select></label><label>From<input type="date" name="from" value="<%= query.from||'' %>"></label><label>To<input type="date" name="to"
+        value="<%= query.to||'' %>"></label><button class="button primary">Apply filters</button><a class="text-link"
+      href="/movements">Reset</a></form>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>SKU</th>
+          <th class="numeric">Change</th>
+          <th class="numeric">Balance after</th>
+          <th>Reason</th>
+          <th>Reference</th>
+          <th>By</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody><% result.rows.forEach(m=>{ %><tr>
+          <td>
+            <div class="product-cell"><span class="product-image"><%- icon(productIcon(m)) %></span><strong><%= m.name %></strong></div>
+          </td>
+          <td class="sku"><%= m.sku %></td>
+          <td class="numeric stock-quantity <%= m.change_quantity>0?'green-text':'rose-text' %>">
+            <%= m.change_quantity>0?'+':'' %><%= number(m.change_quantity) %></td>
+          <td class="numeric"><%= m.balance_after??'—' %></td>
+          <td><%= m.reason %></td>
+          <td><% if(m.order_id){ %><a class="text-link"
+              href="/orders/<%= m.order_id %>">#SO-<%= String(m.order_id).padStart(4,'0') %></a><% } else if(m.purchase_order_id && user.role==='manager'){ %><a
+              class="text-link"
+              href="/purchases/<%= m.purchase_order_id %>">#PO-<%= String(m.purchase_order_id).padStart(4,'0') %></a><% } else { %>—<% } %>
+          </td>
+          <td><%= m.actor||'System' %></td>
+          <td class="date-cell"><%= datetime(m.created_at) %></td>
+        </tr><% }) %></tbody>
+    </table>
+  </div><% if(!result.rows.length){ %><div class="empty-state"><%- icon('arrows') %><h3>No movements found</h3>
+    <p>Try changing the date range or clearing filters.</p>
+  </div><% } %><%- include('partials/pagination',{result,noun:'movements'}) %>
+</section><%- include('partials/end') %>
